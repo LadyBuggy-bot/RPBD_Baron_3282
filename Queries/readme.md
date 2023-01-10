@@ -1,7 +1,7 @@
 <h3> 1. Выведите на экран любое сообщение </h3>
 
 ```plpgsql
-SELECT 'LOL'
+SELECT 'Privet'
 ```
 ![Слово](1.jpg)
 
