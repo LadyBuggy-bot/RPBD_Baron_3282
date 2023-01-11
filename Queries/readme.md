@@ -378,7 +378,7 @@ ALTER TABLE people ADD COLUMN update_date date default now()
 <h4>15. Напишите процедуру, которая позволяет актуализировать рост и вес человека.</h4>
 
 ```plpgsql
-CREATE OR REPLACE PROCEDURE update_grw_and_wght_by_id(id_p int, new_growth numeric, new_weight numeric) AS $$
+CREATE PROCEDURE update_evr(id_p int, new_growth numeric, new_weight numeric) AS $$
 BEGIN
 	UPDATE people SET growth = new_growth WHERE id = id_p;
 	UPDATE people SET weight = new_weight WHERE id = id_p;
@@ -390,5 +390,5 @@ $$ LANGUAGE plpgsql
 Вызов процедуры производится при помощи запроса:
 
 ```plpgsql
-CALL update_grw_and_wght_by_id(8, 170.7, 45.1)
+call update_evr(8, 175.2, 55.9);
 ```
