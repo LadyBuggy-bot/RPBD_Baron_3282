@@ -319,7 +319,7 @@ $$ LANGUAGE plpgsql
 <h4>12. Измените схему БД так, чтобы в БД можно было хранить родственные связи между людьми. Код должен быть представлен в виде транзакции (Например (добавление атрибута): BEGIN; ALTER TABLE people ADD COLUMN leg_size REAL; COMMIT;). Дополните БД данными.</h4>  
 
 Создаём таблицу :
-
+~~~plpgsql
 CREATE TABLE "links" (
 	"id" integer primary key,
 	"people_id" INTEGER NOT NULL,
@@ -328,6 +328,7 @@ CREATE TABLE "links" (
 	FOREIGN KEY ("people_id") REFERENCES "people" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
 	FOREIGN KEY ("people_id_2") REFERENCES "people" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
 	);
+~~~
 
 Добавляем данные при помощи транзакции : 
 
