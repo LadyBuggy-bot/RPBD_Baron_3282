@@ -182,3 +182,212 @@ $$ LANGUAGE plpgsql;
 CALL zxc1(256);
 ~~~
 ![1](10.png)
+
+<h4>7. Числа Люка. Объявляем и присваиваем значение переменной - количество числе Люка. Вывести на экран последовательность чисел. Где L0 = 2, L1 = 1 ; Ln=Ln-1 + Ln-2 (сумма двух предыдущих чисел). Задания: написать фунцию, входной параметр - количество чисел, на выходе - последнее число (Например: входной 5, 2 1 3 4 7 - на выходе число 7); написать процедуру, которая выводит все числа последовательности. Входной параметр - количество чисел.</h4>
+
+Функция:
+
+```plpgsql
+CREATE FUNCTION sky(x int) RETURNS int AS $$
+DECLARE
+L0 int := 2;
+L1 int := 1;
+L2 int;
+BEGIN
+	FOR x IN 3..x LOOP
+		L2 := L1 + L0;
+		L0 := L1;
+		L1 := L2;
+	END LOOP;
+	RETURN L2;
+END
+$$ LANGUAGE plpgsql;
+```
+Вызов функции производится при помощи запроса:
+~~~plpgsql
+SELECT sky(10);
+~~~
+
+![2](11.png)
+
+Процедура:
+
+```plpgsql
+CREATE PROCEDURE skywhywalker(x int) AS $$
+DECLARE
+L0 int := 2;
+L1 int := 1;
+L2 int;
+BEGIN
+	RAISE NOTICE '%', L0;
+	RAISE NOTICE '%', L1;
+	FOR x IN 3..x LOOP
+		L2 := L1 + L0;
+		L0 := L1;
+		L1 := L2;
+		RAISE NOTICE '%', L2;
+	END LOOP;
+END
+$$ LANGUAGE plpgsql;
+```
+Вызов процедуры производится при помощи запроса:
+~~~plpgsql
+CALL skywhywhalker(10);
+~~~
+![1](12.png)
+
+<h4>8. Напишите функцию, которая возвращает количество человек родившихся в заданном году.</h4>
+
+```plpgsql
+CREATE FUNCTION pbyr(yearr int) RETURNS int AS $$
+DECLARE
+	amount int;
+BEGIN
+	SELECT count(*) INTO amount
+	FROM people
+	WHERE EXTRACT(year FROM people.birth_date) = yearr;
+	RETURN amount;
+END
+$$ LANGUAGE plpgsql;
+```
+Вызов функции производится при помощи запроса:
+~~~plpgsql
+SELECT pby(2003);
+~~~
+![6](13.png)
+
+<h4>9. Напишите функцию, которая возвращает количество человек с заданным цветом глаз.</h4>
+
+~~~plpgsql
+CREATE FUNCTION pbe(c varchar) RETURNS int AS $$
+DECLARE
+	amount int;
+BEGIN
+	SELECT count(*) INTO amount
+	FROM people
+	WHERE people.eyes = c;
+	RETURN amount;
+END
+$$ LANGUAGE plpgsql;
+~~~
+
+Вызов функции производится при помощи запроса:
+
+~~~plpgsql
+SELECT pbe('blue');
+~~~
+![6](14.png)
+
+<h4>10. Напишите функцию, которая возвращает ID самого молодого человека в таблице.</h4>
+
+```plpgsql
+CREATE FUNCTION ypi() RETURNS int AS $$
+DECLARE
+	yp int;
+BEGIN
+	SELECT id INTO yp
+	FROM people
+	WHERE birth_date = (SELECT max(birth_date) FROM people);
+	RETURN yp;
+END
+$$ LANGUAGE plpgsql;
+```
+Вызов функции производится при помощи запроса:
+
+~~~plpgsql
+SELECT ypi();
+~~~
+![6](15.png)
+
+<h4>11. Напишите процедуру, которая возвращает людей с индексом массы тела больше заданного. ИМТ = масса в кг / (рост в м)^2.</h4>
+
+```plpgsql
+CREATE PROCEDURE pbi(imt int) AS $$
+DECLARE
+	p people%ROWTYPE;
+BEGIN
+	FOR p IN
+		SELECT * FROM people
+	LOOP
+		IF p.weight / ((p.growth/100)^2 > imt THEN
+			RAISE NOTICE 'name: %, surname: %', p.name, p.surname;
+		END IF;
+	END LOOP;
+END
+$$ LANGUAGE plpgsql
+```
+<h4>12. Измените схему БД так, чтобы в БД можно было хранить родственные связи между людьми. Код должен быть представлен в виде транзакции (Например (добавление атрибута): BEGIN; ALTER TABLE people ADD COLUMN leg_size REAL; COMMIT;). Дополните БД данными.</h4>  
+
+Создаём таблицу :
+
+CREATE TABLE "links" (
+	"id" integer primary key,
+	"people_id" INTEGER NOT NULL,
+	"people_id_2" INTEGER NOT NULL, 
+	"link" VARCHAR,
+	FOREIGN KEY ("people_id") REFERENCES "people" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
+	FOREIGN KEY ("people_id_2") REFERENCES "people" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
+	);
+
+Добавляем данные при помощи транзакции : 
+
+```plpgsql
+BEGIN;
+	INSERT INTO links (id, people_id, people_id_2, link)
+	VALUES  (1, 2, 6, 'брат'),
+			(2, 4, 5, 'сестра');
+COMMIT;
+```
+![7](17.png)
+
+<h4>13. Напишите процедуру, которая позволяет создать в БД нового человека с указанным родством.</h4>
+
+```plpgsql
+CREATE PROCEDURE ap(id_people int, name_people varchar, id_people_2 int, name_people_2 varchar, name_link varchar)
+AS $$
+DECLARE
+BEGIN
+INSERT INTO people (id, name)
+VALUES (id_people, name_people);
+IF NOT EXISTS (SELECT * FROM people WHERE id = id_people_2) THEN
+INSERT INTO people (id, name)
+VALUES (id_people_2, name_people_2);
+END IF;
+INSERT INTO links (people_id, people_id_2, link)
+VALUES (id_people, id_people_2, name_link); 
+END;
+$$ LANGUAGE plpgsql;
+```
+
+Вызов процедуры производится при помощи запроса:
+
+```plpgsql
+CALL apbl(9, 'makar', 7, 'roma', 'брат')
+```
+
+<h4>14. Измените схему БД так, чтобы в БД можно было хранить время актуальности данных человека (выполнить также, как п.12).</h4>
+  
+Для этого создаём дополнительный столбец :
+
+```plpgsql
+ALTER TABLE people ADD COLUMN update_date date default now()
+```
+![75](19.png)
+
+<h4>15. Напишите процедуру, которая позволяет актуализировать рост и вес человека.</h4>
+
+```plpgsql
+CREATE OR REPLACE PROCEDURE update_grw_and_wght_by_id(id_p int, new_growth numeric, new_weight numeric) AS $$
+BEGIN
+	UPDATE people SET growth = new_growth WHERE id = id_p;
+	UPDATE people SET weight = new_weight WHERE id = id_p;
+	UPDATE people SET update_date = now() WHERE id = id_p;
+END;
+$$ LANGUAGE plpgsql
+```
+
+Вызов процедуры производится при помощи запроса:
+
+```plpgsql
+CALL update_grw_and_wght_by_id(8, 170.7, 45.1)
+```
