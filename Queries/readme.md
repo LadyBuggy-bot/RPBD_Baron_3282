@@ -390,5 +390,6 @@ $$ LANGUAGE plpgsql
 Вызов процедуры производится при помощи запроса:
 
 ```plpgsql
-call update_evr(8, 175.2, 55.9);
+call update_evr(6, 175.2, 55.9);
 ```
+![767](21.png)
